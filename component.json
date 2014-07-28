@@ -1,0 +1,15 @@
+{
+	"name": "draggable-dialog",
+	"repo": "staygrimm/draggable-dialog",
+	"description": "a simple draggable dialog box",
+	"version": "0.1.0",
+	"license": "MIT",
+	"scripts": ["index.js"],
+	"styles": ["styles.css"],
+	"author": "kevin neff",
+	"dependencies": {
+		"component/reactive": "*",
+		"staygrimm/draggable": "23989c3",
+		"component/classes": "*"
+	}
+}

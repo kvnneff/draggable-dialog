@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<link rel="stylesheet" type="text/css" href="../build/build.css" />
+</head>
+<body>
+	<a href="#" id="dialogOpen1">Dialog #1</a>
+	<a href="#" id="dialogOpen2">Dialog #2</a>
+
+	<div id="myDiv">
+		This is a draggable dialog.
+	</div>
+	<script type="text/javascript" src="../build/build.js"></script>
+	<script type="text/javascript">
+		var el = document.getElementById('myDiv'),
+			draggable = require('draggable-dialog'),
+			dialogOne,
+			dialogTwo;
+
+		dialogOne = draggable(el);
+		dialogTwo = draggable('This is another draggable dialog', {title: 'My other dialog'});
+		
+		dialogTwo.on('hide', function () {
+			dialogTwo.remove();
+		});
+
+		dialogOne.on('drag', function () {
+			console.log('drag');
+		});
+
+		dialogOne.on('start', function () {
+			console.log('start');
+		});
+
+		dialogOne.on('end', function () {
+			console.log('end');
+		});
+
+		document.getElementById('dialogOpen1').addEventListener('click', function(ev) {
+			dialogOne.show();
+		}, false);
+
+		document.getElementById('dialogOpen2').addEventListener('click', function(ev) {
+			dialogTwo.show();
+		}, false);
+
+	</script>
+</body>
+</html>
