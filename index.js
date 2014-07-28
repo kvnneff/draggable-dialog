@@ -85,6 +85,10 @@ Dialog.prototype.render = function render() {
 
     this.draggable = draggable(this.nodes.containerDiv);
 
+    if (this.options.title) {
+        this.draggable.handle(this.nodes.titleDiv);
+    }
+
     this.draggable.on('drag', function () {
         self.emit('drag');
     }); 
