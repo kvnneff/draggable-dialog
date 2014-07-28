@@ -8,6 +8,7 @@
 	"styles": ["styles.css"],
 	"author": "kevin neff",
 	"dependencies": {
+		"component/emitter": "*",
 		"staygrimm/draggable": "d52947b",
 		"component/classes": "*"
 	}
