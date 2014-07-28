@@ -8,8 +8,7 @@
 	"styles": ["styles.css"],
 	"author": "kevin neff",
 	"dependencies": {
-		"component/reactive": "*",
-		"staygrimm/draggable": "23989c3",
+		"staygrimm/draggable": "d52947b",
 		"component/classes": "*"
 	}
 }
