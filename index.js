@@ -55,9 +55,10 @@ Dialog.prototype.render = function render() {
     if ('string' === typeof this.el) {
         this.nodes.contentDiv.innerHTML = this.el;
     } else {
-        tempEl = this.el.cloneNode(true);
-        classes(tempEl).remove('DraggableDialog--hidden');
-        this.nodes.contentDiv.appendChild(tempEl);
+        // tempEl = this.el.cloneNode(true);
+        // classes(tempEl).remove('DraggableDialog--hidden');
+        classes(this.el).remove('DraggableDialog--hidden');
+        this.nodes.contentDiv.appendChild(this.el);
     }
 
     if (this.options.title) {
