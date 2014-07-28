@@ -1,4 +1,4 @@
-var Emitter = require('component-emitter'),
+var Emitter = require('emitter'),
     classes = require('classes'),
     draggable = require('draggable'),
     Dialog,
