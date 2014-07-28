@@ -1,0 +1,48 @@
+.DraggableDialog {
+    position: absolute;
+    left: 40%;
+    top: 150px;
+    max-width: 600px;
+    min-width: 250px;
+    border: 1px solid #eee;
+    background: white;
+    z-index: 1000;
+}
+
+.DraggableDialog-content {
+    padding: 15px 20px;
+}
+
+.DraggableDialog-titleBar {
+    font-weight: bold;
+    padding: 3px 20px;
+}
+
+.DraggableDialog-closeButton {
+    position: absolute;
+    top: 3px;
+    right: 10px;
+    text-decoration: none;
+    color: #888;
+    font-size: 16px;
+    font-weight: bold;
+    display: block;
+    cursor: pointer;
+}
+
+.DraggableDialog-closeButton:hover {
+    color: black;
+}
+
+.DraggableDialog-closeButton:active {
+    margin-top: 1px;
+}
+
+.DraggableDialog-closeButton em {
+    display: none;
+}
+
+.DraggableDialog--hidden {
+    display:none!important;
+}
+
