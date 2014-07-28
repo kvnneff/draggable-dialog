@@ -2,7 +2,7 @@
 	"name": "draggable-dialog",
 	"repo": "staygrimm/draggable-dialog",
 	"description": "a simple draggable dialog box",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"license": "MIT",
 	"scripts": ["index.js"],
 	"styles": ["styles.css"],
@@ -10,6 +10,7 @@
 	"dependencies": {
 		"component/emitter": "*",
 		"staygrimm/draggable": "d52947b",
-		"component/classes": "*"
+		"component/classes": "*",
+		"ui-component/mouse": "*"
 	}
 }

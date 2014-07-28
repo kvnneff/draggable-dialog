@@ -1,6 +1,7 @@
 var Emitter = require('emitter'),
     classes = require('classes'),
     draggable = require('draggable'),
+    mouse = require('mouse'),
     Dialog,
     closeHandler,
     emit;
@@ -84,6 +85,9 @@ Dialog.prototype.render = function render() {
 
     this.nodes.titleClose.addEventListener('click', closeHandler.bind(self), false);
 
+    this.mouse = mouse(this.nodes.containerDiv, this);
+    this.mouse.bind();
+
     this.draggable = draggable(this.nodes.containerDiv);
 
     if (this.options.title) {
@@ -138,6 +142,13 @@ Dialog.prototype.remove = function remove() {
     this.nodes.containerDiv.parentNode.removeChild(this.nodes.containerDiv);
 
     this.emit('remove');
+};
+
+/**
+ * on-mousedown
+ */
+Dialog.prototype.onmousedown = function onmousedown() {
+    this.emit('click');
 };
 
 module.exports = function (el, options) {

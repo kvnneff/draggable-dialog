@@ -21,6 +21,7 @@ Events
 * `show` the dialog is shown
 * `hide` the dialog is hidden
 * `remove` the dialog is destroyed
+* `click` on mouse down
 * `start` the dialog is beginning to move
 * `drag` the dialog is being dragged
 * `end` the dialog has stopped moving
