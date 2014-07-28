@@ -35,17 +35,17 @@ Create a new draggable dialog using `el` and optional `options` object.  `el` ma
 Options may include a property `title` which will be displayed in the title bar of the draggable dialog.
 
 Draggable#show()
-===
+---
 
 Display the dialog.
 
 Draggable#hide()
-===
+---
 
 Hide the dialog
 
 Draggable#remove()
-===
+---
 
 Destroy the dialog, removing it from the DOM completely.
 
