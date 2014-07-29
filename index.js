@@ -148,6 +148,21 @@ Dialog.prototype.remove = function remove() {
  * on-mousedown
  */
 Dialog.prototype.onmousedown = function onmousedown() {
+    var draggables = document.getElementsByClassName('DraggableDialog'),
+        arr = [],
+        l;
+        
+    arr = Array.prototype.slice.call(draggables);
+    i = arr.length;
+
+    while (i--) {
+        arr[i].style.zIndex = 999;
+        classes(arr[i]).add('DraggableDialog--inactive');
+    }
+
+    classes(this.nodes.containerDiv).remove('DraggableDialog--inactive').add('DraggableDialog--active');
+    this.nodes.containerDiv.style.zIndex = 1000;
+
     this.emit('click');
 };
 
