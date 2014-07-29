@@ -9,6 +9,10 @@
     z-index: 1000;
 }
 
+.DraggableDialog--inactive {
+    color: #999;
+}
+
 .DraggableDialog-content {
     padding: 15px 20px;
 }

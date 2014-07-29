@@ -1147,6 +1147,7 @@ require.register("draggable-dialog", function (exports, module) {
 var Emitter = require("component~emitter@1.1.3"),
     classes = require("component~classes@1.2.1"),
     draggable = require("staygrimm~draggable@d52947b"),
+    mouse = require("ui-component~mouse@0.0.1"),
     Dialog,
     closeHandler,
     emit;
@@ -1201,9 +1202,10 @@ Dialog.prototype.render = function render() {
     if ('string' === typeof this.el) {
         this.nodes.contentDiv.innerHTML = this.el;
     } else {
-        tempEl = this.el.cloneNode(true);
-        classes(tempEl).remove('DraggableDialog--hidden');
-        this.nodes.contentDiv.appendChild(tempEl);
+        // tempEl = this.el.cloneNode(true);
+        // classes(tempEl).remove('DraggableDialog--hidden');
+        classes(this.el).remove('DraggableDialog--hidden');
+        this.nodes.contentDiv.appendChild(this.el);
     }
 
     if (this.options.title) {
@@ -1229,7 +1231,14 @@ Dialog.prototype.render = function render() {
 
     this.nodes.titleClose.addEventListener('click', closeHandler.bind(self), false);
 
+    this.mouse = mouse(this.nodes.containerDiv, this);
+    this.mouse.bind();
+
     this.draggable = draggable(this.nodes.containerDiv);
+
+    if (this.options.title) {
+        this.draggable.handle(this.nodes.titleDiv);
+    }
 
     this.draggable.on('drag', function () {
         self.emit('drag');
@@ -1279,6 +1288,28 @@ Dialog.prototype.remove = function remove() {
     this.nodes.containerDiv.parentNode.removeChild(this.nodes.containerDiv);
 
     this.emit('remove');
+};
+
+/**
+ * on-mousedown
+ */
+Dialog.prototype.onmousedown = function onmousedown() {
+    var draggables = document.getElementsByClassName('DraggableDialog'),
+        arr = [],
+        l;
+        
+    arr = Array.prototype.slice.call(draggables);
+    i = arr.length;
+
+    while (i--) {
+        arr[i].style.zIndex = 999;
+        classes(arr[i]).add('DraggableDialog--inactive');
+    }
+
+    classes(this.nodes.containerDiv).remove('DraggableDialog--inactive').add('DraggableDialog--active');
+    this.nodes.containerDiv.style.zIndex = 1000;
+
+    this.emit('click');
 };
 
 module.exports = function (el, options) {
