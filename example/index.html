@@ -5,9 +5,14 @@
 	<title>Document</title>
 	<link rel="stylesheet" type="text/css" href="../build/build.css" />
 	<style type="text/css">
-	body {
-		background: green;
-	}
+		body {
+			background: green;
+		}
+
+		.offset {
+			top: 100px;
+			left: 20px;
+		}
 	</style>
 </head>
 <body>
@@ -26,6 +31,8 @@
 
 		dialogOne = draggable(el);
 		dialogTwo = draggable('This is another draggable dialog', {title: 'My other dialog'});
+
+		dialogOne.addClass('offset');
 		
 		dialogTwo.on('hide', function () {
 			dialogTwo.remove();

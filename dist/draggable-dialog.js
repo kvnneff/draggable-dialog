@@ -1320,6 +1320,16 @@ Dialog.prototype.onmousedown = function onmousedown() {
     this.emit('click');
 };
 
+/**
+ * Add class `name`
+ * @param {String} name
+ * @api public
+ */
+
+Dialog.prototype.addClass = function addClass(name) {
+    classes(this.nodes.containerDiv).add(name);
+};
+
 module.exports = function (el, options) {
     return new Dialog(el, options);
 };
