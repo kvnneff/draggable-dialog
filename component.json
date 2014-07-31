@@ -9,7 +9,7 @@
 	"author": "kevin neff",
 	"dependencies": {
 		"component/emitter": "*",
-		"staygrimm/draggable": "d52947b",
+		"staygrimm/draggable": "e64f23d",
 		"component/classes": "*",
 		"ui-component/mouse": "*"
 	}
