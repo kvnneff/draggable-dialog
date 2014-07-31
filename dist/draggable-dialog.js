@@ -1242,7 +1242,7 @@ Dialog.prototype.render = function render() {
     this.mouse = mouse(this.nodes.containerDiv, this);
     this.mouse.bind();
 
-    this.draggable = draggable(this.nodes.containerDiv);
+    this.draggable = draggable(this.nodes.containerDiv, {roundPixels: true});
 
     if (this.options.title) {
         this.draggable.handle(this.nodes.titleDiv);
