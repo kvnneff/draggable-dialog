@@ -972,7 +972,7 @@ function translate(el, x, y){
 
 });
 
-require.register("staygrimm~draggable@d52947b", function (exports, module) {
+require.register("staygrimm~draggable@e64f23d", function (exports, module) {
 
 /**
  * dependencies.
@@ -988,21 +988,23 @@ var emitter = require("component~emitter@1.1.3")
  * export `Draggable`.
  */
 
-module.exports = function(el){
-  return new Draggable(el);
+module.exports = function(el, options){
+  options = options || {};
+  return new Draggable(el, options);
 };
 
 /**
  * initialize new `Draggable`.
  *
  * @param {Element} el
- * @param {Object} opts
+ * @param {Object} options
  */
 
-function Draggable(el){
+function Draggable(el, options){
   this._xAxis = true;
   this._yAxis = true;
   this.el = el;
+  this.options = options;
 }
 
 /**
@@ -1069,6 +1071,12 @@ Draggable.prototype.onmousemove = function(e){
     if (0 >= y) y = 0;
     if (o.y >= o.height) y = o.h;
     if (o.x >= o.width) x = o.w;
+  }
+
+  // round pixels
+  if (this.options.roundPixels && this.options.roundPixels === true) {
+    x = Math.floor(x);
+    y = Math.floor(y);
   }
 
   // move draggable.
@@ -1146,7 +1154,7 @@ Draggable.prototype.handle = function(el){
 require.register("draggable-dialog", function (exports, module) {
 var Emitter = require("component~emitter@1.1.3"),
     classes = require("component~classes@1.2.1"),
-    draggable = require("staygrimm~draggable@d52947b"),
+    draggable = require("staygrimm~draggable@e64f23d"),
     mouse = require("ui-component~mouse@0.0.1"),
     Dialog,
     closeHandler,
