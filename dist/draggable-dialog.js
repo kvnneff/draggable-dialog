@@ -1271,6 +1271,8 @@ Dialog.prototype.show = function show() {
     document.body.appendChild(this.docFragment);
 
     classes(this.nodes.containerDiv).remove('DraggableDialog--hidden');
+
+    this.active();
     this.emit('show');
 };
 
@@ -1302,6 +1304,26 @@ Dialog.prototype.remove = function remove() {
  * on-mousedown
  */
 Dialog.prototype.onmousedown = function onmousedown() {
+    this.active();
+
+    this.emit('click');
+};
+
+/**
+ * Add class `name`
+ * @param {String} name
+ * @api public
+ */
+
+Dialog.prototype.addClass = function addClass(name) {
+    classes(this.nodes.containerDiv).add(name);
+};
+
+/**
+ * Make this dialog active
+ * @api public
+ */
+Dialog.prototype.active = function active() {
     var draggables = document.getElementsByClassName('DraggableDialog'),
         arr = [],
         l;
@@ -1316,19 +1338,7 @@ Dialog.prototype.onmousedown = function onmousedown() {
 
     classes(this.nodes.containerDiv).remove('DraggableDialog--inactive').add('DraggableDialog--active');
     this.nodes.containerDiv.style.zIndex = 1000;
-
-    this.emit('click');
-};
-
-/**
- * Add class `name`
- * @param {String} name
- * @api public
- */
-
-Dialog.prototype.addClass = function addClass(name) {
-    classes(this.nodes.containerDiv).add(name);
-};
+}
 
 module.exports = function (el, options) {
     return new Dialog(el, options);
