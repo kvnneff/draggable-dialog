@@ -6,11 +6,12 @@
     min-width: 250px;
     border: 1px solid #eee;
     background: white;
-    z-index: 1000;
+    z-index: 50;
 }
 
 .DraggableDialog--inactive {
     color: #999;
+    z-index: 45;
 }
 
 .DraggableDialog-content {

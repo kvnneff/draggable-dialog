@@ -620,7 +620,7 @@ function match(el, selector) {
 
 });
 
-require.register("discore~closest@0.1.3", function (exports, module) {
+require.register("component~closest@0.1.4", function (exports, module) {
 var matches = require("component~matches-selector@0.1.5")
 
 module.exports = function (element, selector, checkYoSelf, root) {
@@ -637,17 +637,18 @@ module.exports = function (element, selector, checkYoSelf, root) {
     // the selector matches the root
     // (when the root is not the document)
     if (element === root)
-      return  
+      return
   }
 }
+
 });
 
-require.register("component~delegate@0.2.2", function (exports, module) {
+require.register("component~delegate@0.2.3", function (exports, module) {
 /**
  * Module dependencies.
  */
 
-var closest = require("discore~closest@0.1.3")
+var closest = require("component~closest@0.1.4")
   , event = require("component~event@0.1.4");
 
 /**
@@ -688,14 +689,14 @@ exports.unbind = function(el, type, fn, capture){
 
 });
 
-require.register("component~events@1.0.8", function (exports, module) {
+require.register("component~events@1.0.9", function (exports, module) {
 
 /**
  * Module dependencies.
  */
 
 var events = require("component~event@0.1.4");
-var delegate = require("component~delegate@0.2.2");
+var delegate = require("component~delegate@0.2.3");
 
 /**
  * Expose `Events`.
@@ -972,7 +973,7 @@ function translate(el, x, y){
 
 });
 
-require.register("staygrimm~draggable@e64f23d", function (exports, module) {
+require.register("ui-component~draggable@HEAD", function (exports, module) {
 
 /**
  * dependencies.
@@ -980,7 +981,7 @@ require.register("staygrimm~draggable@e64f23d", function (exports, module) {
 
 var emitter = require("component~emitter@1.1.3")
   , mouse = require("ui-component~mouse@0.0.1")
-  , events = require("component~events@1.0.8")
+  , events = require("component~events@1.0.9")
   , translate = require("component~translate@0.1.0")
   , classes = require("component~classes@1.2.1");
 
@@ -1004,7 +1005,12 @@ function Draggable(el, options){
   this._xAxis = true;
   this._yAxis = true;
   this.el = el;
-  this.options = options;
+  this.options = {};
+  this.options.roundPixels = true;
+
+  if (typeof options.roundPixels !== 'undefined') {
+    this.options.roundPixels = options.roundPixels;
+  }
 }
 
 /**
@@ -1074,7 +1080,7 @@ Draggable.prototype.onmousemove = function(e){
   }
 
   // round pixels
-  if (this.options.roundPixels && this.options.roundPixels === true) {
+  if (this.options.roundPixels === true) {
     x = Math.floor(x);
     y = Math.floor(y);
   }
@@ -1154,7 +1160,7 @@ Draggable.prototype.handle = function(el){
 require.register("draggable-dialog", function (exports, module) {
 var Emitter = require("component~emitter@1.1.3"),
     classes = require("component~classes@1.2.1"),
-    draggable = require("staygrimm~draggable@e64f23d"),
+    draggable = require("ui-component~draggable@HEAD"),
     mouse = require("ui-component~mouse@0.0.1"),
     Dialog,
     closeHandler,
@@ -1242,7 +1248,7 @@ Dialog.prototype.render = function render() {
     this.mouse = mouse(this.nodes.containerDiv, this);
     this.mouse.bind();
 
-    this.draggable = draggable(this.nodes.containerDiv, {roundPixels: true});
+    this.draggable = draggable(this.nodes.containerDiv);
 
     if (this.options.title) {
         this.draggable.handle(this.nodes.titleDiv);
@@ -1332,13 +1338,11 @@ Dialog.prototype.active = function active() {
     i = arr.length;
 
     while (i--) {
-        arr[i].style.zIndex = 999;
         classes(arr[i]).add('DraggableDialog--inactive');
     }
 
     classes(this.nodes.containerDiv).remove('DraggableDialog--inactive').add('DraggableDialog--active');
-    this.nodes.containerDiv.style.zIndex = 1000;
-}
+};
 
 module.exports = function (el, options) {
     return new Dialog(el, options);
