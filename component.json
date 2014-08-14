@@ -2,14 +2,14 @@
 	"name": "draggable-dialog",
 	"repo": "staygrimm/draggable-dialog",
 	"description": "a simple draggable dialog box",
-	"version": "0.1.3",
+	"version": "1.0.0",
 	"license": "MIT",
 	"scripts": ["index.js"],
 	"styles": ["styles.css"],
-	"author": "kevin neff",
+	"author": "river grimm",
 	"dependencies": {
 		"component/emitter": "*",
-		"staygrimm/draggable": "e64f23d",
+		"ui-component/draggable": "HEAD",
 		"component/classes": "*",
 		"ui-component/mouse": "*"
 	}

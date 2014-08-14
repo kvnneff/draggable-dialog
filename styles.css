@@ -11,6 +11,7 @@
 
 .DraggableDialog--inactive {
     color: #999;
+    z-index: 45;
 }
 
 .DraggableDialog-content {

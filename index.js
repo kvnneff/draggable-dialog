@@ -88,7 +88,7 @@ Dialog.prototype.render = function render() {
     this.mouse = mouse(this.nodes.containerDiv, this);
     this.mouse.bind();
 
-    this.draggable = draggable(this.nodes.containerDiv, {roundPixels: true});
+    this.draggable = draggable(this.nodes.containerDiv);
 
     if (this.options.title) {
         this.draggable.handle(this.nodes.titleDiv);
@@ -178,13 +178,11 @@ Dialog.prototype.active = function active() {
     i = arr.length;
 
     while (i--) {
-        arr[i].style.zIndex = 999;
         classes(arr[i]).add('DraggableDialog--inactive');
     }
 
     classes(this.nodes.containerDiv).remove('DraggableDialog--inactive').add('DraggableDialog--active');
-    this.nodes.containerDiv.style.zIndex = 1000;
-}
+};
 
 module.exports = function (el, options) {
     return new Dialog(el, options);
