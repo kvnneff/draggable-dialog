@@ -1,0 +1,30 @@
+{
+  "name": "draggable-dialog",
+  "version": "1.0.0",
+  "description": "a simple draggable dialog box",
+  "main": "index.js",
+  "directories": {
+    "example": "example",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/staygrimm/draggable-dialog.git"
+  },
+  "keywords": [
+    "draggable"
+  ],
+  "author": "river grimm",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/staygrimm/draggable-dialog/issues"
+  },
+  "homepage": "https://github.com/staygrimm/draggable-dialog",
+  "devDependencies": {
+    "duo": "^0.8.1",
+    "duo-test": "^0.3.2"
+  }
+}

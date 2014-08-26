@@ -14,21 +14,23 @@ closeHandler = function closeHandler() {
 /**
  * Return a new Dialog with given `element` 
  * and `options`.
- * 
+ *
  * @param {DOM Element||String} el DOM element to clone or string
  * @param {Object} options Options Object
  * @param {String} options.title Optional dialog title
  * @api public
  */
 Dialog = function Dialog(el, options) {
+    if (!(this instanceof Dialog)) return new Dialog(el, options);
+
     this.options = options || {};
     this.nodes = {};
     this.el = el;
-    
-    if (this.el.tagName) {
-        classes(el).add('DraggableDialog--hidden');
-    }
 
+    if (!this.el || !this.el.tagName) {
+        return new Error('Not a suitable element');
+    }
+    
     this.render();
 };
 
