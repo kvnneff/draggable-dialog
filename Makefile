@@ -35,10 +35,9 @@ test: build
 dist-build:
 	@$(BIN)/duo \
 		-g draggable-dialog \
-		$(JS) > dist/draggable-dialog.js
+		index.js > dist/draggable-dialog.js
 	@$(BIN)/duo \
-		$(CSS) > dist/draggable-dialog.css
-
+		styles.css > dist/draggable-dialog.css
 
 dist-minify: dist/draggable-dialog.js
 	@curl -s \
@@ -53,4 +52,4 @@ dist-minify: dist/draggable-dialog.js
 clean:
 	@rm -fr build/* components node_modules
 
-.PHONY: clean test build build-js build-css build-tests
+.PHONY: clean test dist-build build build-js build-css build-tests
