@@ -1,61 +1,281 @@
+(function outer(modules, cache, entries){
 
-;(function(){
+  /**
+   * Global
+   */
+
+  var global = (function(){ return this; })();
+
+  /**
+   * Require `name`.
+   *
+   * @param {String} name
+   * @param {Boolean} jumped
+   * @api public
+   */
+
+  function require(name, jumped){
+    if (cache[name]) return cache[name].exports;
+    if (modules[name]) return call(name, require);
+    throw new Error('cannot find module "' + name + '"');
+  }
+
+  /**
+   * Call module `id` and cache it.
+   *
+   * @param {Number} id
+   * @param {Function} require
+   * @return {Function}
+   * @api private
+   */
+
+  function call(id, require){
+    var m = cache[id] = { exports: {} };
+    var mod = modules[id];
+    var name = mod[2];
+    var fn = mod[0];
+
+    fn.call(m.exports, function(req){
+      var dep = modules[id][1][req];
+      return require(dep ? dep : req);
+    }, m, m.exports, outer, modules, cache, entries);
+
+    // expose as `name`.
+    if (name) cache[name] = cache[id];
+
+    return cache[id].exports;
+  }
+
+  /**
+   * Require all entries exposing them on global if needed.
+   */
+
+  for (var id in entries) {
+    if (entries[id]) {
+      global[entries[id]] = require(id);
+    } else {
+      require(id);
+    }
+  }
+
+  /**
+   * Duo flag.
+   */
+
+  require.duo = true;
+
+  /**
+   * Expose cache.
+   */
+
+  require.cache = cache;
+
+  /**
+   * Expose modules
+   */
+
+  require.modules = modules;
+
+  /**
+   * Return newest require.
+   */
+
+   return require;
+})({
+1: [function(require, module, exports) {
+var Emitter = require('emitter'),
+    classes = require('classes'),
+    draggable = require('draggable'),
+    mouse = require('mouse'),
+    Dialog,
+    closeHandler,
+    emit;
+
+
+closeHandler = function closeHandler() {
+    this.hide();
+};
 
 /**
- * Require the module at `name`.
+ * Return a new Dialog with given `element` 
+ * and `options`.
  *
+ * @param {DOM Element||String} el DOM element to clone or string
+ * @param {Object} options Options Object
+ * @param {String} options.title Optional dialog title
+ * @api public
+ */
+Dialog = function Dialog(el, options) {
+    if (!(this instanceof Dialog)) return new Dialog(el, options);
+
+    this.options = options || {};
+    this.nodes = {};
+    this.el = el;
+
+    if (!this.el || !this.el.tagName) {
+        return new Error('Not a suitable element');
+    }
+    
+    this.render();
+};
+
+/**
+ * Inherit from `Emitter.prototype`
+ */
+Emitter(Dialog.prototype);
+
+/**
+ * Render the dialog
+ * @api public
+ */
+Dialog.prototype.render = function render() {
+    var self = this,
+        tempEl;
+
+    this.docFragment = document.createDocumentFragment();
+
+    this.nodes.containerDiv = document.createElement('div');
+    this.nodes.titleClose = document.createElement('a');
+    this.nodes.titleDiv = this.nodes.containerDiv.cloneNode();
+    this.nodes.contentDiv = this.nodes.containerDiv.cloneNode();
+    this.nodes.titleClose.innerHTML = '&times;<em>close</em>';
+
+    if ('string' === typeof this.el) {
+        this.nodes.contentDiv.innerHTML = this.el;
+    } else {
+        // tempEl = this.el.cloneNode(true);
+        // classes(tempEl).remove('DraggableDialog--hidden');
+        classes(this.el).remove('DraggableDialog--hidden');
+        this.nodes.contentDiv.appendChild(this.el);
+    }
+
+    if (this.options.title) {
+        this.nodes.titleSpan = document.createElement('span');
+        this.nodes.titleSpan.innerHTML = this.options.title;
+        classes(this.nodes.titleSpan).add('DraggableDialog-title');
+
+        this.nodes.titleDiv.appendChild(this.nodes.titleSpan);
+        this.nodes.titleDiv.appendChild(this.nodes.titleClose);
+    } else {
+        this.nodes.titleDiv.appendChild(this.nodes.titleClose);
+    }
+
+    this.nodes.containerDiv.appendChild(this.nodes.titleDiv);
+    this.nodes.containerDiv.appendChild(this.nodes.contentDiv);
+
+    this.docFragment.appendChild(this.nodes.containerDiv);
+
+    classes(this.nodes.containerDiv).add('DraggableDialog').add('DraggableDialog--hidden');
+    classes(this.nodes.titleDiv).add('DraggableDialog-titleBar');
+    classes(this.nodes.titleClose).add('DraggableDialog-closeButton');
+    classes(this.nodes.contentDiv).add('DraggableDialog-content');
+
+    this.nodes.titleClose.addEventListener('click', closeHandler.bind(self), false);
+
+    this.mouse = mouse(this.nodes.containerDiv, this);
+    this.mouse.bind();
+
+    this.draggable = draggable(this.nodes.containerDiv);
+
+    if (this.options.title) {
+        this.draggable.handle(this.nodes.titleDiv);
+    }
+
+    this.draggable.on('drag', function () {
+        self.emit('drag');
+    }); 
+
+    this.draggable.on('start', function () {
+        self.emit('start');
+    }); 
+
+    this.draggable.on('end', function () {
+        self.emit('end');
+    }); 
+
+    this.draggable.build();
+};
+
+/**
+ * Display the dialog
+ * @api public
+ */
+Dialog.prototype.show = function show() {
+    document.body.appendChild(this.docFragment);
+
+    classes(this.nodes.containerDiv).remove('DraggableDialog--hidden');
+
+    this.active();
+    this.emit('show');
+};
+
+/**
+ * Hide the dialog
+ * @api public
+ */
+Dialog.prototype.hide = function hide() {
+    classes(this.nodes.containerDiv).add('DraggableDialog--hidden');
+
+    this.emit('hide');
+};
+
+/**
+ * Destroy the dialog
+ * @api public
+ */
+Dialog.prototype.remove = function remove() {
+    if (this.draggable) {
+        this.draggable.destroy()
+    }
+    this.nodes.titleClose.removeEventListener('click', closeHandler.bind(self), false);
+    this.nodes.containerDiv.parentNode.removeChild(this.nodes.containerDiv);
+
+    this.emit('remove');
+};
+
+/**
+ * on-mousedown
+ */
+Dialog.prototype.onmousedown = function onmousedown() {
+    this.active();
+
+    this.emit('click');
+};
+
+/**
+ * Add class `name`
  * @param {String} name
- * @return {Object} exports
  * @api public
  */
 
-function require(name) {
-  var module = require.modules[name];
-  if (!module) throw new Error('failed to require "' + name + '"');
-
-  if (!('exports' in module) && typeof module.definition === 'function') {
-    module.client = module.component = true;
-    module.definition.call(this, module.exports = {}, module);
-    delete module.definition;
-  }
-
-  return module.exports;
-}
-
-/**
- * Registered modules.
- */
-
-require.modules = {};
-
-/**
- * Register module at `name` with callback `definition`.
- *
- * @param {String} name
- * @param {Function} definition
- * @api private
- */
-
-require.register = function (name, definition) {
-  require.modules[name] = {
-    definition: definition
-  };
+Dialog.prototype.addClass = function addClass(name) {
+    classes(this.nodes.containerDiv).add(name);
 };
 
 /**
- * Define a module's exports immediately with `exports`.
- *
- * @param {String} name
- * @param {Generic} exports
- * @api private
+ * Make this dialog active
+ * @api public
  */
+Dialog.prototype.active = function active() {
+    var draggables = document.getElementsByClassName('DraggableDialog'),
+        arr = [],
+        l;
+        
+    arr = Array.prototype.slice.call(draggables);
+    i = arr.length;
 
-require.define = function (name, exports) {
-  require.modules[name] = {
-    exports: exports
-  };
+    while (i--) {
+        classes(arr[i]).add('DraggableDialog--inactive');
+    }
+
+    classes(this.nodes.containerDiv).remove('DraggableDialog--inactive').add('DraggableDialog--active');
 };
-require.register("component~emitter@1.1.3", function (exports, module) {
+
+module.exports = function (el, options) {
+    return new Dialog(el, options);
+};
+}, {"emitter":2,"classes":3,"draggable":4,"mouse":5}],
+2: [function(require, module, exports) {
 
 /**
  * Expose `Emitter`.
@@ -221,24 +441,13 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-});
-
-require.register("component~indexof@0.0.3", function (exports, module) {
-module.exports = function(arr, obj){
-  if (arr.indexOf) return arr.indexOf(obj);
-  for (var i = 0; i < arr.length; ++i) {
-    if (arr[i] === obj) return i;
-  }
-  return -1;
-};
-});
-
-require.register("component~classes@1.2.1", function (exports, module) {
+}, {}],
+3: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
 
-var index = require("component~indexof@0.0.3");
+var index = require('indexof');
 
 /**
  * Whitespace regexp.
@@ -419,571 +628,27 @@ ClassList.prototype.contains = function(name){
     : !! ~index(this.array(), name);
 };
 
-});
-
-require.register("component~event@0.1.4", function (exports, module) {
-var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',
-    unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
-    prefix = bind !== 'addEventListener' ? 'on' : '';
-
-/**
- * Bind `el` event `type` to `fn`.
- *
- * @param {Element} el
- * @param {String} type
- * @param {Function} fn
- * @param {Boolean} capture
- * @return {Function}
- * @api public
- */
-
-exports.bind = function(el, type, fn, capture){
-  el[bind](prefix + type, fn, capture || false);
-  return fn;
+}, {"indexof":6}],
+6: [function(require, module, exports) {
+module.exports = function(arr, obj){
+  if (arr.indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
 };
-
-/**
- * Unbind `el` event `type`'s callback `fn`.
- *
- * @param {Element} el
- * @param {String} type
- * @param {Function} fn
- * @param {Boolean} capture
- * @return {Function}
- * @api public
- */
-
-exports.unbind = function(el, type, fn, capture){
-  el[unbind](prefix + type, fn, capture || false);
-  return fn;
-};
-});
-
-require.register("ui-component~mouse@0.0.1", function (exports, module) {
+}, {}],
+4: [function(require, module, exports) {
 
 /**
  * dependencies.
  */
 
-var emitter = require("component~emitter@1.1.3")
-  , event = require("component~event@0.1.4");
-
-/**
- * export `Mouse`
- */
-
-module.exports = function(el, obj){
-  return new Mouse(el, obj);
-};
-
-/**
- * initialize new `Mouse`.
- * 
- * @param {Element} el
- * @param {Object} obj
- */
-
-function Mouse(el, obj){
-  this.obj = obj || {};
-  this.el = el;
-}
-
-/**
- * mixin emitter.
- */
-
-emitter(Mouse.prototype);
-
-/**
- * bind mouse.
- * 
- * @return {Mouse}
- */
-
-Mouse.prototype.bind = function(){
-  var obj = this.obj
-    , self = this;
-
-  // up
-  function up(e){
-    obj.onmouseup && obj.onmouseup(e);
-    event.unbind(document, 'mousemove', move);
-    event.unbind(document, 'mouseup', up);
-    self.emit('up', e);
-  }
-
-  // move
-  function move(e){
-    obj.onmousemove && obj.onmousemove(e);
-    self.emit('move', e);
-  }
-
-  // down
-  self.down = function(e){
-    obj.onmousedown && obj.onmousedown(e);
-    event.bind(document, 'mouseup', up);
-    event.bind(document, 'mousemove', move);
-    self.emit('down', e);
-  };
-
-  // bind all.
-  event.bind(this.el, 'mousedown', self.down);
-
-  return this;
-};
-
-/**
- * unbind mouse.
- * 
- * @return {Mouse}
- */
-
-Mouse.prototype.unbind = function(){
-  event.unbind(this.el, 'mousedown', this.down);
-  this.down = null;
-};
-
-});
-
-require.register("component~query@0.0.3", function (exports, module) {
-function one(selector, el) {
-  return el.querySelector(selector);
-}
-
-exports = module.exports = function(selector, el){
-  el = el || document;
-  return one(selector, el);
-};
-
-exports.all = function(selector, el){
-  el = el || document;
-  return el.querySelectorAll(selector);
-};
-
-exports.engine = function(obj){
-  if (!obj.one) throw new Error('.one callback required');
-  if (!obj.all) throw new Error('.all callback required');
-  one = obj.one;
-  exports.all = obj.all;
-  return exports;
-};
-
-});
-
-require.register("component~matches-selector@0.1.5", function (exports, module) {
-/**
- * Module dependencies.
- */
-
-var query = require("component~query@0.0.3");
-
-/**
- * Element prototype.
- */
-
-var proto = Element.prototype;
-
-/**
- * Vendor function.
- */
-
-var vendor = proto.matches
-  || proto.webkitMatchesSelector
-  || proto.mozMatchesSelector
-  || proto.msMatchesSelector
-  || proto.oMatchesSelector;
-
-/**
- * Expose `match()`.
- */
-
-module.exports = match;
-
-/**
- * Match `el` to `selector`.
- *
- * @param {Element} el
- * @param {String} selector
- * @return {Boolean}
- * @api public
- */
-
-function match(el, selector) {
-  if (!el || el.nodeType !== 1) return false;
-  if (vendor) return vendor.call(el, selector);
-  var nodes = query.all(selector, el.parentNode);
-  for (var i = 0; i < nodes.length; ++i) {
-    if (nodes[i] == el) return true;
-  }
-  return false;
-}
-
-});
-
-require.register("component~closest@0.1.4", function (exports, module) {
-var matches = require("component~matches-selector@0.1.5")
-
-module.exports = function (element, selector, checkYoSelf, root) {
-  element = checkYoSelf ? {parentNode: element} : element
-
-  root = root || document
-
-  // Make sure `element !== document` and `element != null`
-  // otherwise we get an illegal invocation
-  while ((element = element.parentNode) && element !== document) {
-    if (matches(element, selector))
-      return element
-    // After `matches` on the edge case that
-    // the selector matches the root
-    // (when the root is not the document)
-    if (element === root)
-      return
-  }
-}
-
-});
-
-require.register("component~delegate@0.2.3", function (exports, module) {
-/**
- * Module dependencies.
- */
-
-var closest = require("component~closest@0.1.4")
-  , event = require("component~event@0.1.4");
-
-/**
- * Delegate event `type` to `selector`
- * and invoke `fn(e)`. A callback function
- * is returned which may be passed to `.unbind()`.
- *
- * @param {Element} el
- * @param {String} selector
- * @param {String} type
- * @param {Function} fn
- * @param {Boolean} capture
- * @return {Function}
- * @api public
- */
-
-exports.bind = function(el, selector, type, fn, capture){
-  return event.bind(el, type, function(e){
-    var target = e.target || e.srcElement;
-    e.delegateTarget = closest(target, selector, true, el);
-    if (e.delegateTarget) fn.call(el, e);
-  }, capture);
-};
-
-/**
- * Unbind event `type`'s callback `fn`.
- *
- * @param {Element} el
- * @param {String} type
- * @param {Function} fn
- * @param {Boolean} capture
- * @api public
- */
-
-exports.unbind = function(el, type, fn, capture){
-  event.unbind(el, type, fn, capture);
-};
-
-});
-
-require.register("component~events@1.0.9", function (exports, module) {
-
-/**
- * Module dependencies.
- */
-
-var events = require("component~event@0.1.4");
-var delegate = require("component~delegate@0.2.3");
-
-/**
- * Expose `Events`.
- */
-
-module.exports = Events;
-
-/**
- * Initialize an `Events` with the given
- * `el` object which events will be bound to,
- * and the `obj` which will receive method calls.
- *
- * @param {Object} el
- * @param {Object} obj
- * @api public
- */
-
-function Events(el, obj) {
-  if (!(this instanceof Events)) return new Events(el, obj);
-  if (!el) throw new Error('element required');
-  if (!obj) throw new Error('object required');
-  this.el = el;
-  this.obj = obj;
-  this._events = {};
-}
-
-/**
- * Subscription helper.
- */
-
-Events.prototype.sub = function(event, method, cb){
-  this._events[event] = this._events[event] || {};
-  this._events[event][method] = cb;
-};
-
-/**
- * Bind to `event` with optional `method` name.
- * When `method` is undefined it becomes `event`
- * with the "on" prefix.
- *
- * Examples:
- *
- *  Direct event handling:
- *
- *    events.bind('click') // implies "onclick"
- *    events.bind('click', 'remove')
- *    events.bind('click', 'sort', 'asc')
- *
- *  Delegated event handling:
- *
- *    events.bind('click li > a')
- *    events.bind('click li > a', 'remove')
- *    events.bind('click a.sort-ascending', 'sort', 'asc')
- *    events.bind('click a.sort-descending', 'sort', 'desc')
- *
- * @param {String} event
- * @param {String|function} [method]
- * @return {Function} callback
- * @api public
- */
-
-Events.prototype.bind = function(event, method){
-  var e = parse(event);
-  var el = this.el;
-  var obj = this.obj;
-  var name = e.name;
-  var method = method || 'on' + name;
-  var args = [].slice.call(arguments, 2);
-
-  // callback
-  function cb(){
-    var a = [].slice.call(arguments).concat(args);
-    obj[method].apply(obj, a);
-  }
-
-  // bind
-  if (e.selector) {
-    cb = delegate.bind(el, e.selector, name, cb);
-  } else {
-    events.bind(el, name, cb);
-  }
-
-  // subscription for unbinding
-  this.sub(name, method, cb);
-
-  return cb;
-};
-
-/**
- * Unbind a single binding, all bindings for `event`,
- * or all bindings within the manager.
- *
- * Examples:
- *
- *  Unbind direct handlers:
- *
- *     events.unbind('click', 'remove')
- *     events.unbind('click')
- *     events.unbind()
- *
- * Unbind delegate handlers:
- *
- *     events.unbind('click', 'remove')
- *     events.unbind('click')
- *     events.unbind()
- *
- * @param {String|Function} [event]
- * @param {String|Function} [method]
- * @api public
- */
-
-Events.prototype.unbind = function(event, method){
-  if (0 == arguments.length) return this.unbindAll();
-  if (1 == arguments.length) return this.unbindAllOf(event);
-
-  // no bindings for this event
-  var bindings = this._events[event];
-  if (!bindings) return;
-
-  // no bindings for this method
-  var cb = bindings[method];
-  if (!cb) return;
-
-  events.unbind(this.el, event, cb);
-};
-
-/**
- * Unbind all events.
- *
- * @api private
- */
-
-Events.prototype.unbindAll = function(){
-  for (var event in this._events) {
-    this.unbindAllOf(event);
-  }
-};
-
-/**
- * Unbind all events for `event`.
- *
- * @param {String} event
- * @api private
- */
-
-Events.prototype.unbindAllOf = function(event){
-  var bindings = this._events[event];
-  if (!bindings) return;
-
-  for (var method in bindings) {
-    this.unbind(event, method);
-  }
-};
-
-/**
- * Parse `event`.
- *
- * @param {String} event
- * @return {Object}
- * @api private
- */
-
-function parse(event) {
-  var parts = event.split(/ +/);
-  return {
-    name: parts.shift(),
-    selector: parts.join(' ')
-  }
-}
-
-});
-
-require.register("component~transform-property@0.0.1", function (exports, module) {
-
-var styles = [
-  'webkitTransform',
-  'MozTransform',
-  'msTransform',
-  'OTransform',
-  'transform'
-];
-
-var el = document.createElement('p');
-var style;
-
-for (var i = 0; i < styles.length; i++) {
-  style = styles[i];
-  if (null != el.style[style]) {
-    module.exports = style;
-    break;
-  }
-}
-
-});
-
-require.register("component~has-translate3d@0.0.3", function (exports, module) {
-
-var prop = require("component~transform-property@0.0.1");
-
-// IE <=8 doesn't have `getComputedStyle`
-if (!prop || !window.getComputedStyle) {
-  module.exports = false;
-
-} else {
-  var map = {
-    webkitTransform: '-webkit-transform',
-    OTransform: '-o-transform',
-    msTransform: '-ms-transform',
-    MozTransform: '-moz-transform',
-    transform: 'transform'
-  };
-
-  // from: https://gist.github.com/lorenzopolidori/3794226
-  var el = document.createElement('div');
-  el.style[prop] = 'translate3d(1px,1px,1px)';
-  document.body.insertBefore(el, null);
-  var val = getComputedStyle(el).getPropertyValue(map[prop]);
-  document.body.removeChild(el);
-  module.exports = null != val && val.length && 'none' != val;
-}
-
-});
-
-require.register("component~translate@0.1.0", function (exports, module) {
-
-/**
- * Module dependencies.
- */
-
-var transform = require("component~transform-property@0.0.1");
-var has3d = require("component~has-translate3d@0.0.3");
-
-
-/**
- * Regexp to check "End with %"
- */
-
-var percentRegexp = /%$/;
-
-
-/**
- * Expose `translate`.
- */
-
-module.exports = translate;
-
-
-/**
- * Translate `el` by `(x, y)`.
- *
- * @param {Element} el
- * @param {Number|String} x
- * @param {Number|String} y 
- * @api public
- */
-
-
-function translate(el, x, y){
-  
-  if (!percentRegexp.test(x)) x += 'px';
-  if (!percentRegexp.test(y)) y += 'px';
-
-  if (transform) {
-    if (has3d) {
-      el.style[transform] = 'translate3d(' + x + ', ' + y + ', 0)';
-    } else {
-      el.style[transform] = 'translate(' + x + ',' + y + ')';
-    }
-  } else {
-    el.style.left = x;
-    el.style.top = y;
-  }
-};
-
-});
-
-require.register("ui-component~draggable@HEAD", function (exports, module) {
-
-/**
- * dependencies.
- */
-
-var emitter = require("component~emitter@1.1.3")
-  , mouse = require("ui-component~mouse@0.0.1")
-  , events = require("component~events@1.0.9")
-  , translate = require("component~translate@0.1.0")
-  , classes = require("component~classes@1.2.1");
+var emitter = require('emitter')
+  , mouse = require('mouse')
+  , events = require('events')
+  , translate = require('translate')
+  , classes = require('classes');
 
 /**
  * export `Draggable`.
@@ -1155,205 +820,546 @@ Draggable.prototype.handle = function(el){
   return this;
 };
 
-});
+}, {"emitter":2,"mouse":5,"events":7,"translate":8,"classes":3}],
+5: [function(require, module, exports) {
 
-require.register("draggable-dialog", function (exports, module) {
-var Emitter = require("component~emitter@1.1.3"),
-    classes = require("component~classes@1.2.1"),
-    draggable = require("ui-component~draggable@HEAD"),
-    mouse = require("ui-component~mouse@0.0.1"),
-    Dialog,
-    closeHandler,
-    emit;
+/**
+ * dependencies.
+ */
 
+var emitter = require('emitter')
+  , event = require('event');
 
-closeHandler = function closeHandler() {
-    this.hide();
+/**
+ * export `Mouse`
+ */
+
+module.exports = function(el, obj){
+  return new Mouse(el, obj);
 };
 
 /**
- * Return a new Dialog with given `element` 
- * and `options`.
+ * initialize new `Mouse`.
  * 
- * @param {DOM Element||String} el DOM element to clone or string
- * @param {Object} options Options Object
- * @param {String} options.title Optional dialog title
- * @api public
- */
-Dialog = function Dialog(el, options) {
-    this.options = options || {};
-    this.nodes = {};
-    this.el = el;
-    
-    if (this.el.tagName) {
-        classes(el).add('DraggableDialog--hidden');
-    }
-
-    this.render();
-};
-
-/**
- * Inherit from `Emitter.prototype`
- */
-Emitter(Dialog.prototype);
-
-/**
- * Render the dialog
- * @api public
- */
-Dialog.prototype.render = function render() {
-    var self = this,
-        tempEl;
-
-    this.docFragment = document.createDocumentFragment();
-
-    this.nodes.containerDiv = document.createElement('div');
-    this.nodes.titleClose = document.createElement('a');
-    this.nodes.titleDiv = this.nodes.containerDiv.cloneNode();
-    this.nodes.contentDiv = this.nodes.containerDiv.cloneNode();
-    this.nodes.titleClose.innerHTML = '&times;<em>close</em>';
-
-    if ('string' === typeof this.el) {
-        this.nodes.contentDiv.innerHTML = this.el;
-    } else {
-        // tempEl = this.el.cloneNode(true);
-        // classes(tempEl).remove('DraggableDialog--hidden');
-        classes(this.el).remove('DraggableDialog--hidden');
-        this.nodes.contentDiv.appendChild(this.el);
-    }
-
-    if (this.options.title) {
-        this.nodes.titleSpan = document.createElement('span');
-        this.nodes.titleSpan.innerHTML = this.options.title;
-        classes(this.nodes.titleSpan).add('DraggableDialog-title');
-
-        this.nodes.titleDiv.appendChild(this.nodes.titleSpan);
-        this.nodes.titleDiv.appendChild(this.nodes.titleClose);
-    } else {
-        this.nodes.titleDiv.appendChild(this.nodes.titleClose);
-    }
-
-    this.nodes.containerDiv.appendChild(this.nodes.titleDiv);
-    this.nodes.containerDiv.appendChild(this.nodes.contentDiv);
-
-    this.docFragment.appendChild(this.nodes.containerDiv);
-
-    classes(this.nodes.containerDiv).add('DraggableDialog').add('DraggableDialog--hidden');
-    classes(this.nodes.titleDiv).add('DraggableDialog-titleBar');
-    classes(this.nodes.titleClose).add('DraggableDialog-closeButton');
-    classes(this.nodes.contentDiv).add('DraggableDialog-content');
-
-    this.nodes.titleClose.addEventListener('click', closeHandler.bind(self), false);
-
-    this.mouse = mouse(this.nodes.containerDiv, this);
-    this.mouse.bind();
-
-    this.draggable = draggable(this.nodes.containerDiv);
-
-    if (this.options.title) {
-        this.draggable.handle(this.nodes.titleDiv);
-    }
-
-    this.draggable.on('drag', function () {
-        self.emit('drag');
-    }); 
-
-    this.draggable.on('start', function () {
-        self.emit('start');
-    }); 
-
-    this.draggable.on('end', function () {
-        self.emit('end');
-    }); 
-
-    this.draggable.build();
-};
-
-/**
- * Display the dialog
- * @api public
- */
-Dialog.prototype.show = function show() {
-    document.body.appendChild(this.docFragment);
-
-    classes(this.nodes.containerDiv).remove('DraggableDialog--hidden');
-
-    this.active();
-    this.emit('show');
-};
-
-/**
- * Hide the dialog
- * @api public
- */
-Dialog.prototype.hide = function hide() {
-    classes(this.nodes.containerDiv).add('DraggableDialog--hidden');
-
-    this.emit('hide');
-};
-
-/**
- * Destroy the dialog
- * @api public
- */
-Dialog.prototype.remove = function remove() {
-    if (this.draggable) {
-        this.draggable.destroy()
-    }
-    this.nodes.titleClose.removeEventListener('click', closeHandler.bind(self), false);
-    this.nodes.containerDiv.parentNode.removeChild(this.nodes.containerDiv);
-
-    this.emit('remove');
-};
-
-/**
- * on-mousedown
- */
-Dialog.prototype.onmousedown = function onmousedown() {
-    this.active();
-
-    this.emit('click');
-};
-
-/**
- * Add class `name`
- * @param {String} name
- * @api public
+ * @param {Element} el
+ * @param {Object} obj
  */
 
-Dialog.prototype.addClass = function addClass(name) {
-    classes(this.nodes.containerDiv).add(name);
-};
-
-/**
- * Make this dialog active
- * @api public
- */
-Dialog.prototype.active = function active() {
-    var draggables = document.getElementsByClassName('DraggableDialog'),
-        arr = [],
-        l;
-        
-    arr = Array.prototype.slice.call(draggables);
-    i = arr.length;
-
-    while (i--) {
-        classes(arr[i]).add('DraggableDialog--inactive');
-    }
-
-    classes(this.nodes.containerDiv).remove('DraggableDialog--inactive').add('DraggableDialog--active');
-};
-
-module.exports = function (el, options) {
-    return new Dialog(el, options);
-};
-});
-
-if (typeof exports == "object") {
-  module.exports = require("draggable-dialog");
-} else if (typeof define == "function" && define.amd) {
-  define([], function(){ return require("draggable-dialog"); });
-} else {
-  this["draggableDialog"] = require("draggable-dialog");
+function Mouse(el, obj){
+  this.obj = obj || {};
+  this.el = el;
 }
-})()
+
+/**
+ * mixin emitter.
+ */
+
+emitter(Mouse.prototype);
+
+/**
+ * bind mouse.
+ * 
+ * @return {Mouse}
+ */
+
+Mouse.prototype.bind = function(){
+  var obj = this.obj
+    , self = this;
+
+  // up
+  function up(e){
+    obj.onmouseup && obj.onmouseup(e);
+    event.unbind(document, 'mousemove', move);
+    event.unbind(document, 'mouseup', up);
+    self.emit('up', e);
+  }
+
+  // move
+  function move(e){
+    obj.onmousemove && obj.onmousemove(e);
+    self.emit('move', e);
+  }
+
+  // down
+  self.down = function(e){
+    obj.onmousedown && obj.onmousedown(e);
+    event.bind(document, 'mouseup', up);
+    event.bind(document, 'mousemove', move);
+    self.emit('down', e);
+  };
+
+  // bind all.
+  event.bind(this.el, 'mousedown', self.down);
+
+  return this;
+};
+
+/**
+ * unbind mouse.
+ * 
+ * @return {Mouse}
+ */
+
+Mouse.prototype.unbind = function(){
+  event.unbind(this.el, 'mousedown', this.down);
+  this.down = null;
+};
+
+}, {"emitter":2,"event":9}],
+9: [function(require, module, exports) {
+var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',
+    unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
+    prefix = bind !== 'addEventListener' ? 'on' : '';
+
+/**
+ * Bind `el` event `type` to `fn`.
+ *
+ * @param {Element} el
+ * @param {String} type
+ * @param {Function} fn
+ * @param {Boolean} capture
+ * @return {Function}
+ * @api public
+ */
+
+exports.bind = function(el, type, fn, capture){
+  el[bind](prefix + type, fn, capture || false);
+  return fn;
+};
+
+/**
+ * Unbind `el` event `type`'s callback `fn`.
+ *
+ * @param {Element} el
+ * @param {String} type
+ * @param {Function} fn
+ * @param {Boolean} capture
+ * @return {Function}
+ * @api public
+ */
+
+exports.unbind = function(el, type, fn, capture){
+  el[unbind](prefix + type, fn, capture || false);
+  return fn;
+};
+}, {}],
+7: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var events = require('event');
+var delegate = require('delegate');
+
+/**
+ * Expose `Events`.
+ */
+
+module.exports = Events;
+
+/**
+ * Initialize an `Events` with the given
+ * `el` object which events will be bound to,
+ * and the `obj` which will receive method calls.
+ *
+ * @param {Object} el
+ * @param {Object} obj
+ * @api public
+ */
+
+function Events(el, obj) {
+  if (!(this instanceof Events)) return new Events(el, obj);
+  if (!el) throw new Error('element required');
+  if (!obj) throw new Error('object required');
+  this.el = el;
+  this.obj = obj;
+  this._events = {};
+}
+
+/**
+ * Subscription helper.
+ */
+
+Events.prototype.sub = function(event, method, cb){
+  this._events[event] = this._events[event] || {};
+  this._events[event][method] = cb;
+};
+
+/**
+ * Bind to `event` with optional `method` name.
+ * When `method` is undefined it becomes `event`
+ * with the "on" prefix.
+ *
+ * Examples:
+ *
+ *  Direct event handling:
+ *
+ *    events.bind('click') // implies "onclick"
+ *    events.bind('click', 'remove')
+ *    events.bind('click', 'sort', 'asc')
+ *
+ *  Delegated event handling:
+ *
+ *    events.bind('click li > a')
+ *    events.bind('click li > a', 'remove')
+ *    events.bind('click a.sort-ascending', 'sort', 'asc')
+ *    events.bind('click a.sort-descending', 'sort', 'desc')
+ *
+ * @param {String} event
+ * @param {String|function} [method]
+ * @return {Function} callback
+ * @api public
+ */
+
+Events.prototype.bind = function(event, method){
+  var e = parse(event);
+  var el = this.el;
+  var obj = this.obj;
+  var name = e.name;
+  var method = method || 'on' + name;
+  var args = [].slice.call(arguments, 2);
+
+  // callback
+  function cb(){
+    var a = [].slice.call(arguments).concat(args);
+    obj[method].apply(obj, a);
+  }
+
+  // bind
+  if (e.selector) {
+    cb = delegate.bind(el, e.selector, name, cb);
+  } else {
+    events.bind(el, name, cb);
+  }
+
+  // subscription for unbinding
+  this.sub(name, method, cb);
+
+  return cb;
+};
+
+/**
+ * Unbind a single binding, all bindings for `event`,
+ * or all bindings within the manager.
+ *
+ * Examples:
+ *
+ *  Unbind direct handlers:
+ *
+ *     events.unbind('click', 'remove')
+ *     events.unbind('click')
+ *     events.unbind()
+ *
+ * Unbind delegate handlers:
+ *
+ *     events.unbind('click', 'remove')
+ *     events.unbind('click')
+ *     events.unbind()
+ *
+ * @param {String|Function} [event]
+ * @param {String|Function} [method]
+ * @api public
+ */
+
+Events.prototype.unbind = function(event, method){
+  if (0 == arguments.length) return this.unbindAll();
+  if (1 == arguments.length) return this.unbindAllOf(event);
+
+  // no bindings for this event
+  var bindings = this._events[event];
+  if (!bindings) return;
+
+  // no bindings for this method
+  var cb = bindings[method];
+  if (!cb) return;
+
+  events.unbind(this.el, event, cb);
+};
+
+/**
+ * Unbind all events.
+ *
+ * @api private
+ */
+
+Events.prototype.unbindAll = function(){
+  for (var event in this._events) {
+    this.unbindAllOf(event);
+  }
+};
+
+/**
+ * Unbind all events for `event`.
+ *
+ * @param {String} event
+ * @api private
+ */
+
+Events.prototype.unbindAllOf = function(event){
+  var bindings = this._events[event];
+  if (!bindings) return;
+
+  for (var method in bindings) {
+    this.unbind(event, method);
+  }
+};
+
+/**
+ * Parse `event`.
+ *
+ * @param {String} event
+ * @return {Object}
+ * @api private
+ */
+
+function parse(event) {
+  var parts = event.split(/ +/);
+  return {
+    name: parts.shift(),
+    selector: parts.join(' ')
+  }
+}
+
+}, {"event":9,"delegate":10}],
+10: [function(require, module, exports) {
+/**
+ * Module dependencies.
+ */
+
+var closest = require('closest')
+  , event = require('event');
+
+/**
+ * Delegate event `type` to `selector`
+ * and invoke `fn(e)`. A callback function
+ * is returned which may be passed to `.unbind()`.
+ *
+ * @param {Element} el
+ * @param {String} selector
+ * @param {String} type
+ * @param {Function} fn
+ * @param {Boolean} capture
+ * @return {Function}
+ * @api public
+ */
+
+exports.bind = function(el, selector, type, fn, capture){
+  return event.bind(el, type, function(e){
+    var target = e.target || e.srcElement;
+    e.delegateTarget = closest(target, selector, true, el);
+    if (e.delegateTarget) fn.call(el, e);
+  }, capture);
+};
+
+/**
+ * Unbind event `type`'s callback `fn`.
+ *
+ * @param {Element} el
+ * @param {String} type
+ * @param {Function} fn
+ * @param {Boolean} capture
+ * @api public
+ */
+
+exports.unbind = function(el, type, fn, capture){
+  event.unbind(el, type, fn, capture);
+};
+
+}, {"closest":11,"event":9}],
+11: [function(require, module, exports) {
+var matches = require('matches-selector')
+
+module.exports = function (element, selector, checkYoSelf, root) {
+  element = checkYoSelf ? {parentNode: element} : element
+
+  root = root || document
+
+  // Make sure `element !== document` and `element != null`
+  // otherwise we get an illegal invocation
+  while ((element = element.parentNode) && element !== document) {
+    if (matches(element, selector))
+      return element
+    // After `matches` on the edge case that
+    // the selector matches the root
+    // (when the root is not the document)
+    if (element === root)
+      return
+  }
+}
+
+}, {"matches-selector":12}],
+12: [function(require, module, exports) {
+/**
+ * Module dependencies.
+ */
+
+var query = require('query');
+
+/**
+ * Element prototype.
+ */
+
+var proto = Element.prototype;
+
+/**
+ * Vendor function.
+ */
+
+var vendor = proto.matches
+  || proto.webkitMatchesSelector
+  || proto.mozMatchesSelector
+  || proto.msMatchesSelector
+  || proto.oMatchesSelector;
+
+/**
+ * Expose `match()`.
+ */
+
+module.exports = match;
+
+/**
+ * Match `el` to `selector`.
+ *
+ * @param {Element} el
+ * @param {String} selector
+ * @return {Boolean}
+ * @api public
+ */
+
+function match(el, selector) {
+  if (!el || el.nodeType !== 1) return false;
+  if (vendor) return vendor.call(el, selector);
+  var nodes = query.all(selector, el.parentNode);
+  for (var i = 0; i < nodes.length; ++i) {
+    if (nodes[i] == el) return true;
+  }
+  return false;
+}
+
+}, {"query":13}],
+13: [function(require, module, exports) {
+function one(selector, el) {
+  return el.querySelector(selector);
+}
+
+exports = module.exports = function(selector, el){
+  el = el || document;
+  return one(selector, el);
+};
+
+exports.all = function(selector, el){
+  el = el || document;
+  return el.querySelectorAll(selector);
+};
+
+exports.engine = function(obj){
+  if (!obj.one) throw new Error('.one callback required');
+  if (!obj.all) throw new Error('.all callback required');
+  one = obj.one;
+  exports.all = obj.all;
+  return exports;
+};
+
+}, {}],
+8: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var transform = require('transform-property');
+var has3d = require('has-translate3d');
+
+
+/**
+ * Regexp to check "End with %"
+ */
+
+var percentRegexp = /%$/;
+
+
+/**
+ * Expose `translate`.
+ */
+
+module.exports = translate;
+
+
+/**
+ * Translate `el` by `(x, y)`.
+ *
+ * @param {Element} el
+ * @param {Number|String} x
+ * @param {Number|String} y 
+ * @api public
+ */
+
+
+function translate(el, x, y){
+  
+  if (!percentRegexp.test(x)) x += 'px';
+  if (!percentRegexp.test(y)) y += 'px';
+
+  if (transform) {
+    if (has3d) {
+      el.style[transform] = 'translate3d(' + x + ', ' + y + ', 0)';
+    } else {
+      el.style[transform] = 'translate(' + x + ',' + y + ')';
+    }
+  } else {
+    el.style.left = x;
+    el.style.top = y;
+  }
+};
+
+}, {"transform-property":14,"has-translate3d":15}],
+14: [function(require, module, exports) {
+
+var styles = [
+  'webkitTransform',
+  'MozTransform',
+  'msTransform',
+  'OTransform',
+  'transform'
+];
+
+var el = document.createElement('p');
+var style;
+
+for (var i = 0; i < styles.length; i++) {
+  style = styles[i];
+  if (null != el.style[style]) {
+    module.exports = style;
+    break;
+  }
+}
+
+}, {}],
+15: [function(require, module, exports) {
+
+var prop = require('transform-property');
+
+// IE <=8 doesn't have `getComputedStyle`
+if (!prop || !window.getComputedStyle) {
+  module.exports = false;
+
+} else {
+  var map = {
+    webkitTransform: '-webkit-transform',
+    OTransform: '-o-transform',
+    msTransform: '-ms-transform',
+    MozTransform: '-moz-transform',
+    transform: 'transform'
+  };
+
+  // from: https://gist.github.com/lorenzopolidori/3794226
+  var el = document.createElement('div');
+  el.style[prop] = 'translate3d(1px,1px,1px)';
+  document.body.insertBefore(el, null);
+  var val = getComputedStyle(el).getPropertyValue(map[prop]);
+  document.body.removeChild(el);
+  module.exports = null != val && val.length && 'none' != val;
+}
+
+}, {"transform-property":14}]}, {}, {"1":"draggable-dialog"})
