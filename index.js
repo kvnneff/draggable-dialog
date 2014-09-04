@@ -31,6 +31,8 @@ Dialog = function Dialog(el, options) {
         return new Error('Not a suitable element');
     }
     
+    classes(el).add('DraggableDialog--hidden');
+    
     this.render();
 };
 
